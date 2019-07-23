@@ -3,27 +3,26 @@
 ---
 
 **Description:**  
-A library to control SSD1306-based GLCD using AVR microcontrollers.  
+A branch of AVR-SSD1306-Library based on AVR-SSD1306-Library from efthymios (https://github.com/efthymios-ks/AVR-SSD1306-Library).
+This library has been created to support AVR devices with __USI interface__ and __small RAM__ (many devices with USI do not have sufficient RAM to store whole display buffer). So USIWire library (https://github.com/Tekl7/USIWire/tree/master/src/USI_TWI_Master) is required (instead of TWI library) to implement usage of USI as TWI interface.
++ Include 3 files from USIWire library:
+  + USI_TWI_Master.c
+  + USI_TWI_Master.h
+  + usi_io.h
 + Functions include:  
   + Basic operations.  
-  + Geometrical objects (draw/fill/invert rectangle/circle/triangle etc.).  
-  _These functions have been searched for and found in various Arduino libraries. Their logic and functionality is not to be credited to me. I have only gathered, studied and modified them so that they work under AVR-GCC environmemt._  
+  + Geometrical objects (draw/fill rectangle/line).  
   + Printing text anywhere in the screen using custom imported fonts.  
   + Printing pictures.  
    _Read the bottom of "SSD1306.h" to see all functions available._  
-+ A screen buffer stored in RAM is used to complete the operations faster at the cost of memory size (128x64 pixels / 8 = 1kB).  
-_You can edit the **GLCD_BufferWrite** and **GLCD_BufferRead** functions to change the buffer's location from the RAM to the EEPROM or any other external memory source._  
-+ The GLCD is interfaced using the TWI (I2C) protocol at 400KHz. You can use your own or my included TWI library.  
-+ There is an error checking option while tranceiving data via TWI protocol. If you are not using my library, you have to either define the codes or disable error checking.
-+ My custom I/O macros are required and are included.  
++ __No screen buffer__ is used. All functions display the characters (pixels) immediately so _GLCD_Render_ function is not required.
++ Some functions are removed because of wrong rendering (_GLCD_DrawCircle_, ...). Already rendered pixels were overwritten by another byte of pixels so several pixels were missing at the end.
++ C++ support is added (_extern "C" {}_).
++ The GLCD is interfaced using the TWI (I2C) protocol at 400KHz. You can use your own or my suggested library above. 
++ An error checking option is removed.
++ Custom I/O macros are required and are included.  
 
 ---  
-
-**Memory usage:**  
-+ Program: 0 bytes  
-+ Data: 1034 bytes  
-  + Display buffer: 1024 bytes (128x(64/8))
-  + Display auxiliary data: 10 bytes  
   
 **Compiler:**  
 AVR-GCC  
