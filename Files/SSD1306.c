@@ -284,7 +284,7 @@ void GLCD_DrawBitmap(const uint8_t *Bitmap, uint8_t Width, const uint8_t Height)
 	if (data >= __GLCD_Screen_Width)
 		Width -= data - __GLCD_Screen_Width;
 
-	uint8_t messageBuf[Width + 1];
+	uint8_t messageBuf[Width];
 	
 	//#3 - Read height - Second two bytes - Convert to lines
 	lines = (Height + __GLCD_Screen_Line_Height - 1) / __GLCD_Screen_Line_Height;	//lines = Ceiling(A/B) = (A+B-1)/B
@@ -327,10 +327,6 @@ void GLCD_DrawBitmap(const uint8_t *Bitmap, uint8_t Width, const uint8_t Height)
 			//Send byte
 			messageBuf[i] = data;
 		}
-		//Send an empty column of 1px in the end
-		data = GLCD_White;
-		messageBuf[Width] = data;
-		
 		//Increase line counter
 		y += __GLCD_Screen_Line_Height;
 
@@ -361,10 +357,6 @@ void GLCD_DrawBitmap(const uint8_t *Bitmap, uint8_t Width, const uint8_t Height)
 			//Send byte
 			messageBuf[i] = data;
 		}
-		//Send an empty column of 1px in the end
-		data = GLCD_White;
-		messageBuf[Width] = data;
-
 		//Write
 		GLCD_Send(__GLCD_DATA, messageBuf, sizeof(messageBuf));
 	}
