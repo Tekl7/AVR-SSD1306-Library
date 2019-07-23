@@ -4,7 +4,7 @@
 ||
 ||  Filename:	 		SSD1306.h
 ||  Title: 			    SSD1306 Driver
-||  Author: 			Efthymios Koktsidis
+||  Author: 			Efthymios Koktsidis, Vojtìch Tecl
 ||	Email:				efthymios.ks@gmail.com
 ||  Compiler:		 	AVR-GCC
 ||	Description:
@@ -13,24 +13,39 @@
 */
 
 //----- Headers ------------//
-#include <inttypes.h>
-#include <util/delay.h>
-#include <string.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
 #include "IO_Macros.h"
 #include "SSD1306_Settings.h"
-#include "TWI.h"
+#include <USI_TWI_Master.h>
 //--------------------------//
 
-//----- Auxiliary data ---------------------------//
-#define __GLCD_I2C_Address							0x3C	//0x3C or 0x3D
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
+//----- Auxiliary data ---------------------------//
+//Read / Write Selection bit
 #define __GLCD_RW									0
-#define __GLCD_SA0									1
+//Slave address bit
+#define __GLCD_SA0									0
+//Data / Command Selection bit offset
 #define __GLCD_DC									6
+//Continuation bit offset
 #define __GLCD_CO									7
+//Set Control byte to send Data
+#define __GLCD_DATA									(1<<__GLCD_DC)
+//Set Control byte to send Command
+#define __GLCD_COMMAND								(0<<__GLCD_DC)
+
+//Slave address
+#if __GLCD_SA0
+#define __GLCD_I2C_Address						0x3D
+#else
+#define __GLCD_I2C_Address						0x3C
+#endif
 
 #if (GLCD_Size == GLCD_128_64)
 	#define __GLCD_Screen_Width          			128
@@ -56,7 +71,7 @@
 
 //Scrolling Command Table
 #define __GLCD_Command_Scroll_Activate						0x2F
-#define __GLCD_Command_Scroll_Deactivate					0x2E	
+#define __GLCD_Command_Scroll_Deactivate					0x2E
 #define __GLCD_Command_Scroll_Left							0x27
 #define __GLCD_Command_Scroll_Right							0x26
 #define __GLCD_Command_Scroll_Vertical_Left					0x2A
@@ -90,18 +105,6 @@
 //Charge Pump Command Table
 #define __GLCD_Command_Charge_Pump_Set						0x8D
 
-//Reset delays (in ms)
-#define _GLCD_Delay_1										1
-#define _GLCD_Delay_2										10
-
-#if (GLCD_Error_Checking != 0)
-	enum GLCD_Status
-	{
-		GLCD_Ok,
-		GLCD_Error
-	};
-#endif
-
 enum GLCD_Type_t
 {
 	GLCD_128_64,
@@ -113,12 +116,6 @@ enum OperatingMode_t
 {
 	GLCD_Inverted		= __GLCD_Command_Display_Inverse,
 	GLCD_Non_Inverted	= __GLCD_Command_Display_Normal
-};
-
-enum PrintMode_t
-{
-	GLCD_Overwrite,
-	GLCD_Merge
 };
 
 enum Color_t
@@ -133,14 +130,10 @@ typedef struct
 	uint8_t Width;
 	uint8_t Height;
 	uint8_t Lines;
-	enum PrintMode_t Mode;
 }Font_t;
 
 typedef struct
 {
-	#if (GLCD_Error_Checking != 0)
-		enum GLCD_Status Status;
-	#endif
 	uint8_t X;
 	uint8_t Y;
 	enum OperatingMode_t Mode;
@@ -152,11 +145,6 @@ typedef struct
 void GLCD_SendCommand(uint8_t Command);
 void GLCD_SendData(const uint8_t Data);
 void GLCD_Setup(void);
-void GLCD_Reset(void);
-#if (GLCD_Error_Checking != 0)
-	enum GLCD_Status GLCD_Status(void);
-#endif
-void GLCD_Render(void);
 void GLCD_SetDisplay(const uint8_t On);
 void GLCD_SetContrast(const uint8_t Contrast);
 
@@ -173,18 +161,12 @@ uint8_t GLCD_GetLine(void);
 void GLCD_SetPixel(const uint8_t X, const uint8_t Y, enum Color_t Color);
 void GLCD_SetPixels(uint8_t X1, uint8_t Y1, uint8_t X2, uint8_t Y2, enum Color_t Color);
 
-void GLCD_DrawBitmap(const uint8_t *Bitmap, uint8_t Width, const uint8_t Height, enum PrintMode_t Mode);
+void GLCD_DrawBitmap(const uint8_t *Bitmap, uint8_t Width, const uint8_t Height);
 void GLCD_DrawLine(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, enum Color_t Color);
 void GLCD_DrawRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, enum Color_t Color);
-void GLCD_DrawRoundRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, const uint8_t Radius, enum Color_t Color);
-void GLCD_DrawTriangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, const uint8_t X3, const uint8_t Y3, enum Color_t Color);
-void GLCD_DrawCircle(const uint8_t CenterX, const uint8_t CenterY, uint8_t Radius, enum Color_t Color);
 
 void GLCD_FillScreen(enum Color_t Color);
 void GLCD_FillRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, enum Color_t Color);
-void GLCD_FillRoundRectangle(const uint8_t X1, const uint8_t Y1, const uint8_t X2, const uint8_t Y2, const uint8_t Radius, enum Color_t Color);
-void GLCD_FillTriangle(uint8_t X1, uint8_t Y1, uint8_t X2, uint8_t Y2, uint8_t X3, uint8_t Y3, enum Color_t Color);
-void GLCD_FillCircle(const uint8_t CenterX, const uint8_t CenterY, const uint8_t Radius, enum Color_t Color);
 
 void GLCD_ScrollLeft(const uint8_t Start, const uint8_t End);
 void GLCD_ScrollRight(const uint8_t Start, const uint8_t End);
@@ -193,16 +175,18 @@ void GLCD_ScrollDiagonalRight(const uint8_t Start, const uint8_t End);
 void GLCD_ScrollStop(void);
 
 void GLCD_InvertScreen(void);
-void GLCD_InvertRect(uint8_t X1, uint8_t Y1, uint8_t X2, uint8_t Y2);
 
-void GLCD_SetFont(const uint8_t *Name, const uint8_t Width, const uint8_t Height, enum PrintMode_t Mode);
+void GLCD_SetFont(const uint8_t *Name, const uint8_t Width, const uint8_t Height);
 uint8_t GLCD_GetWidthChar(const char Character);
 uint16_t GLCD_GetWidthString(const char *Text);
-uint16_t GLCD_GetWidthString_P(const char *Text);
 void GLCD_PrintChar(char Character);
 void GLCD_PrintString(const char *Text);
-void GLCD_PrintString_P(const char *Text);
 void GLCD_PrintInteger(const int32_t Value);
-void GLCD_PrintDouble(double Value, const uint32_t Tens);
+void GLCD_PrintDouble(double Value, const uint8_t Precision);
 //-----------------------------------------------------------------------------//
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
