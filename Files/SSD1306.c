@@ -160,7 +160,7 @@ void GLCD_GotoLine(const uint8_t Line)
 		__GLCD.Y = Line * __GLCD_Screen_Line_Height;
 
 		GLCD_SendCommand(__GLCD_Command_Page_Address_Set);
-		GLCD_SendCommand(Line * __GLCD_Screen_Line_Height);
+		GLCD_SendCommand(Line);
 		GLCD_SendCommand(__GLCD_Screen_Lines - 1);
 	}
 }
